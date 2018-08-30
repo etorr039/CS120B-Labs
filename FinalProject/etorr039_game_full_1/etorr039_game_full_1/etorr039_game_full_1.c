@@ -138,12 +138,12 @@ int main(void)
 	tasks[j].TickFct = &reGen_Tick; 
 	j++;
 	tasks[j].state = noShot; 
-	tasks[j].period = 20; 
+	tasks[j].period = 10; 
 	tasks[j].elapsedTime = tasks[j].period;
 	tasks[j].TickFct = &shoot_Tick; 
 	j++;
 	tasks[j].state = invStart; 
-	tasks[j].period = 200; 
+	tasks[j].period = 300; 
 	tasks[j].elapsedTime = tasks[j].period;
 	tasks[j].TickFct = &inv_Tick; 
 	j++;
@@ -698,11 +698,11 @@ int score_Tick(int state) {
 			if (SCORE <= 20 && i == 0) {
 				LCD_Cursor(17);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(1 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -710,11 +710,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 1) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(2 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -722,11 +722,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 2) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(3 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -734,11 +734,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 3) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(4 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -746,11 +746,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 4) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(5 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -762,7 +762,7 @@ int score_Tick(int state) {
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(6 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -770,11 +770,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 6) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(7 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -782,11 +782,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 7) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(8 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -794,11 +794,11 @@ int score_Tick(int state) {
 			else if (SCORE <= 20 && i == 8) {
 				LCD_Cursor(18);
 				LCD_WriteData(SCORE + '0');
-				LCD_Cursor(21);
+				LCD_Cursor(23);
 				if (SCORE >= 10) {
 					LCD_Cursor(17);
 					LCD_WriteData(9 + '0');
-					LCD_Cursor(21);
+					LCD_Cursor(23);
 					SCORE = 0;
 					i++;
 				}
@@ -870,14 +870,14 @@ void ADC_init() {
 }
 
 void winMESG() {
-	invY[0] = 0b11111000;
-	invY[1]	= 0b11111001;
-	invY[2]	= 0b11111000;
-	invY[3]	= 0b11100011;
-	invY[4]	= 0b00001111;
-	invY[5]	= 0b11011111;
-	invY[6]	= 0b10111111;
-	invY[7]	= 0b00001111;
+	invY[0] = 0b00000000;
+	invY[1]	= 0b00001110;
+	invY[2]	= 0b00011000;
+	invY[3]	= 0b00001110;
+	invY[4]	= 0b00001110;
+	invY[5]	= 0b00011000;
+	invY[6]	= 0b00001110;
+	invY[7]	= 0b00000000;
 }
 
 void loseMESG() {
