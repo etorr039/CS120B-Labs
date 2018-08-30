@@ -1,24 +1,31 @@
 /*	Name: Edwin Torres etorr039@ucr.edu
  *	Lab Section: B21
- *	Assignment: Custom Lab Final Game
+ *	Assignment: Custom Lab keeping score
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
  */
 
 #include <avr/io.h>
 #include "scheduler.h"
+#include "io.c"
 
 const unsigned char tasksNum = 8; // number of tasks (# of state machines)
 const unsigned long tasksPeriodGCD = 1; // GCD of all tasks
 task tasks[8]; // create array of tasks
 
 #include "timer.h"
-#include "io.c"
 
 #define SHOOT (~PINA & 0x20)
 
 void ADC_init() {
 	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
+}
+
+unsigned char SetBit(unsigned char x, unsigned char k, unsigned char b) {
+	return (b ? x | (0x01 << k) : x & ~(0x01 << k));
+}
+unsigned char GetBit(unsigned char x, unsigned char k) {
+	return ((x & (0x01 << k)) != 0);
 }
 
 // === Define Tasks ===
@@ -27,6 +34,8 @@ int move_Tick(int state);
 
 enum reGen_States {checkFlag, reGenLeft, reGenRight};
 int reGen_Tick(int state);
+
+void shiftReg(unsigned short data);
 
 enum shoot_States {noShot, shot};
 int shoot_Tick(int state);
@@ -37,25 +46,22 @@ int inv_Tick(int state);
 enum updateMATRIX_States {updateMATRIX};
 int updateMATRIX_Tick(int state);
 
+void collision();
+
 enum win_States {playing1, win, nextLVL};
 int win_Tick(int state);
+
+void winMESG();
 
 enum lose_States {playing2, lose, gameOver};
 int lose_Tick(int state);
 
+void loseMESG();
+
 enum score_States {update};
 int score_Tick(int state);
 
-// === Define Functions ===
-
-void shiftReg(unsigned short data);
-void collision();
-void winMESG();
-void loseMESG();
-
 // === Global Variables ===
-
-// Player ship art
 char shipX[8] = {	0b00000100,
 					0b00001000,
 					0b00010000, 
@@ -76,12 +82,10 @@ char shipY[8] = {	0b01111111,
 					0b11111111,
 				};
 			
-// Player shot art
 char shotX = 0b00001000;	
 
 char shotY = 0b01111111;
-
-// Enemies art	
+				
 char invX[8] = {	0b00000001,
 					0b00000010,
 					0b00000100,
@@ -95,9 +99,9 @@ char invX[8] = {	0b00000001,
 char invY[8] = {	0b11111110,
 					0b11111110,
 					0b11111110,
-					0b11111101,
-					0b11111101,
-					0b11111101,
+					0b11111110,
+					0b11111110,
+					0b11111110,
 					0b11111111,
 					0b11111111,
 				};
@@ -115,18 +119,18 @@ unsigned char SCORE = 0;
 // === Main Function ===
 int main(void)
 {
-	DDRA = 0x00; PORTA = 0xFF; // Input from joystick and button
-	DDRB = 0xFF; PORTB = 0x00; // Output to shift registers and LED matrix
-	DDRC = 0xFF; PORTC = 0x00; // Output to LCD screen
-	DDRD = 0xFF; PORTD = 0x00; // Output to LCD screen
+	DDRA = 0x00; PORTA = 0xFF;
+	DDRB = 0xFF; PORTB = 0x00; 
+	DDRC = 0xFF; PORTC = 0x00;
+	DDRD = 0xFF; PORTD = 0x00;
 	
-	ADC_init(); // initialize Analog to Digital Conversion
-	LCD_init(); // initialize LCD screen 
+	ADC_init();
+	LCD_init();
 	
-	// "SCORE" is displayed on LCD
 	LCD_ClearScreen();
 	LCD_DisplayString(1,"SCORE:");
 	LCD_Cursor(17);
+	
 	
 	unsigned char j = 0;
 
@@ -135,48 +139,57 @@ int main(void)
 	tasks[j].elapsedTime = tasks[j].period;
 	tasks[j].TickFct = &move_Tick; // function pointer
 	j++;
-	tasks[j].state = checkFlag;
-	tasks[j].period = 1; 
+	tasks[j].state = checkFlag; // initial state
+	tasks[j].period = 1; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &reGen_Tick; 
+	tasks[j].TickFct = &reGen_Tick; // function pointer
 	j++;
-	tasks[j].state = noShot; 
-	tasks[j].period = 20; 
+	tasks[j].state = noShot; // initial state
+	tasks[j].period = 20; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &shoot_Tick; 
+	tasks[j].TickFct = &shoot_Tick; // function pointer
 	j++;
-	tasks[j].state = invStart; 
-	tasks[j].period = 200; 
+	tasks[j].state = invStart; // initial state
+	tasks[j].period = 200; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &inv_Tick; 
+	tasks[j].TickFct = &inv_Tick; // function pointer
 	j++;
-	tasks[j].state = updateMATRIX;
-	tasks[j].period = 1; 
+	tasks[j].state = updateMATRIX; // initial state
+	tasks[j].period = 1; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &updateMATRIX_Tick; 
+	tasks[j].TickFct = &updateMATRIX_Tick; // function pointer
 	j++;
-	tasks[j].state = playing1; 
-	tasks[j].period = 100;
+	tasks[j].state = playing1; // initial state
+	tasks[j].period = 100; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &win_Tick; 
+	tasks[j].TickFct = &win_Tick; // function pointer
 	j++;
-	tasks[j].state = playing2; 
-	tasks[j].period = 100; 
+	tasks[j].state = playing2; // initial state
+	tasks[j].period = 100; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &lose_Tick; 
+	tasks[j].TickFct = &lose_Tick; // function pointer
 	j++;
-	tasks[j].state = update; 
-	tasks[j].period = 250; 
+	tasks[j].state = update; // initial state
+	tasks[j].period = 250; // state period
 	tasks[j].elapsedTime = tasks[j].period;
-	tasks[j].TickFct = &score_Tick;
+	tasks[j].TickFct = &score_Tick; // function pointer
 
-	TimerSet(tasksPeriodGCD); // Set system timer
-	TimerOn(); // Start system timer
+	TimerSet(tasksPeriodGCD); // set system timer
+	TimerOn(); // start system timer
 	
-	while(1) {} // Infinite loop
+	while(1) {} 
 }
 
-// === Task Definitions ===
+void loseMESG() {
+	invY[0] = 0b00000000;
+	invY[1]	= 0b00000000;
+	invY[2]	= 0b00000000;
+	invY[3]	= 0b00111100;
+	invY[4]	= 0b00100000;
+	invY[5]	= 0b00000000;
+	invY[6]	= 0b00000000;
+	invY[7]	= 0b00000000;
+}
 
 int lose_Tick(int state) {
 	switch(state) {
@@ -200,6 +213,17 @@ int lose_Tick(int state) {
 			break;
 	}
 	return state;
+}
+
+void winMESG() {
+	invY[0] = 0b11111000;
+	invY[1]	= 0b11111001;
+	invY[2]	= 0b11111000;
+	invY[3]	= 0b11100011;
+	invY[4]	= 0b00001111;
+	invY[5]	= 0b11011111;
+	invY[6]	= 0b10111111;
+	invY[7]	= 0b00001111;
 }
 
 int win_Tick(int state) {
@@ -231,11 +255,11 @@ int win_Tick(int state) {
 			tasks[5].period = 100;
 			if(LEVEL == 0) {
 				invY[0] = 0b11111110;
-				invY[1]	= 0b11111101;
+				invY[1]	= 0b11111110;
 				invY[2]	= 0b11111110;
-				invY[3]	= 0b11111101;
+				invY[3]	= 0b11111110;
 				invY[4]	= 0b11111110;
-				invY[5]	= 0b11111101;
+				invY[5]	= 0b11111110;
 				invY[6]	= 0b11111111;
 				invY[7]	= 0b11111111;
 			}
@@ -265,6 +289,58 @@ int win_Tick(int state) {
 			break;
 	}
 	return state;
+}
+
+void collision() {
+	
+	/*unsigned char i = 0;
+	for (i = 0; i < 8; i++) {
+		if (shotY == invY[i]) {
+			invY[i] = 0xFF;
+			shotY = 0xFF;
+		}
+	}*/
+			if (shotY == invY[pos] && pos == 0) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 1) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 2) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 3) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 4) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 5) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 6) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+			else if (shotY == invY[pos] && pos == 7) {
+				invY[pos] = 0xFF;
+				shotY = 0xFF;
+				SCORE += 1;
+			}
+
 }
 
 int move_Tick(int state){
@@ -391,8 +467,20 @@ int reGen_Tick(int state) {
 			state = checkFlag;
 			break;
 	}
+	
 	return state;
 };
+
+void shiftReg(unsigned short data) {
+	int i;
+	for (i = 0; i < 16 ; ++i) {
+		PORTB = 0x08;
+		PORTB |= ((data >> i) & 0x01);
+		PORTB |= 0x02;
+	}
+	PORTB |= 0x04;
+	PORTB = 0x00;
+}
 
 int shoot_Tick(int state) {
 	
@@ -811,81 +899,4 @@ int score_Tick(int state) {
 			break;
 	}
 	return state;
-}
-
-void collision() {
-	
-	if (shotY == invY[pos] && pos == 0) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 1) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 2) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 3) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 4) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 5) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 6) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-	else if (shotY == invY[pos] && pos == 7) {
-		invY[pos] = 0xFF;
-		shotY = 0xFF;
-		SCORE += 1;
-	}
-}
-
-void shiftReg(unsigned short data) {
-	int i;
-	for (i = 0; i < 16 ; ++i) {
-		PORTB = 0x08;
-		PORTB |= ((data >> i) & 0x01);
-		PORTB |= 0x02;
-	}
-	PORTB |= 0x04;
-	PORTB = 0x00;
-}
-
-void winMESG() {
-	invY[0] = 0b11111000;
-	invY[1]	= 0b11111001;
-	invY[2]	= 0b11111000;
-	invY[3]	= 0b11100011;
-	invY[4]	= 0b00001111;
-	invY[5]	= 0b11011111;
-	invY[6]	= 0b10111111;
-	invY[7]	= 0b00001111;
-}
-
-void loseMESG() {
-	invY[0] = 0b00000000;
-	invY[1]	= 0b00000000;
-	invY[2]	= 0b00000000;
-	invY[3]	= 0b00111100;
-	invY[4]	= 0b00100000;
-	invY[5]	= 0b00000000;
-	invY[6]	= 0b00000000;
-	invY[7]	= 0b00000000;
 }
