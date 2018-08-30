@@ -17,10 +17,6 @@ task tasks[8]; // create array of tasks
 
 #define SHOOT (~PINA & 0x20)
 
-void ADC_init() {
-	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
-}
-
 // === Define Tasks ===
 enum move_States {moveStart, wait, up, down, left, right, unPress};
 int move_Tick(int state);
@@ -52,6 +48,7 @@ void shiftReg(unsigned short data);
 void collision();
 void winMESG();
 void loseMESG();
+void ADC_init();
 
 // === Global Variables ===
 
@@ -866,6 +863,10 @@ void shiftReg(unsigned short data) {
 	}
 	PORTB |= 0x04;
 	PORTB = 0x00;
+}
+
+void ADC_init() {
+	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
 }
 
 void winMESG() {
